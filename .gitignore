@@ -1,0 +1,21 @@
+# !! NEVER commit these !!
+.env
+*.env
+
+# Runtime data
+trades.csv
+*.log
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# IDE / OS
+.DS_Store
+.claude/
+.idea/
+.vscode/

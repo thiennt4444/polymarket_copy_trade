@@ -1,0 +1,28 @@
+{
+  "name": "polymarket-whale-copier",
+  "display_name": "Polymarket Whale Copier",
+  "version": "1.0.0",
+  "description": "Automatically copy trade winning Polymarket wallets. Track any wallet, mirror their bets, profit from their alpha.",
+  "author": "OpenClaw",
+  "language": "python",
+  "min_python_version": "3.9",
+  "entry": "main.py",
+  "install_command": "pip install -r requirements.txt",
+  "run_command": "python main.py",
+  "config_template": ".env.example",
+  "features": [
+    "Copy any wallet by pasting their address",
+    "Configurable position sizing (1-100% of their trade)",
+    "Risk controls: min/max USDC limits per trade",
+    "BUY-only mode to avoid copying sells",
+    "Full trade logging to CSV file",
+    "Auto-redemption of winning positions",
+    "No external API keys required"
+  ],
+  "requirements": {
+    "polygon_usdc_balance": true,
+    "wallet_private_key": true,
+    "polygon_rpc": "public (no key needed)"
+  },
+  "tags": ["polymarket", "prediction-markets", "copy-trade", "defi", "polygon"]
+}

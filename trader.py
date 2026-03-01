@@ -132,15 +132,16 @@ class ClobTrader:
         shares_estimate = usdc_amount / execution_price if execution_price > 0 else 0
 
         try:
+            # price acts as a limit — allows up to 2% slippage above/below quote
+            limit_price = round(
+                execution_price * (1.02 if side == "BUY" else 0.98), 6
+            )
             signed_order = self._client.create_market_order(
                 MarketOrderArgs(
                     token_id=token_id,
                     amount=usdc_amount,
                     side=side,
-                    # worst_price prevents catastrophic fills
-                    worst_price=round(
-                        execution_price * (1.02 if side == "BUY" else 0.98), 6
-                    ),
+                    price=limit_price,
                 )
             )
 

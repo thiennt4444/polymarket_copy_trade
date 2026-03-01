@@ -138,13 +138,16 @@ class WalletTracker:
             f"Loaded {len(self._seen_ids)} existing trades — watching for new ones."
         )
 
-    def get_new_trades(self) -> List[Trade]:
+    def get_new_trades(self, max_age_seconds: int = 60) -> List[Trade]:
         """
-        Return trades that appeared since the last call.
+        Return trades that appeared since the last call AND are no older
+        than max_age_seconds (default 60 s).  Stale trades are marked seen
+        so they are never retried.
         Respects BUY_ONLY mode from Config.
         """
         items = self._fetch(limit=50)
         new: List[Trade] = []
+        now = time.time()
 
         for item in items:
             trade = self._parse(item)
@@ -156,6 +159,14 @@ class WalletTracker:
                 continue
 
             self._seen_ids.add(trade.id)
+
+            # Skip trades older than max_age_seconds
+            age = now - trade.timestamp
+            if age > max_age_seconds:
+                logger.info(
+                    f"Skipping stale trade ({age:.0f}s old): {trade.market_title[:40]}"
+                )
+                continue
 
             # Skip SELLs when BUY_ONLY is active
             if Config.BUY_ONLY and trade.side != "BUY":

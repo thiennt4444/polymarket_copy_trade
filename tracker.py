@@ -69,10 +69,20 @@ class WalletTracker:
             logger.warn(f"Activity API error: {exc}")
             return []
 
+    @staticmethod
+    def _trade_id(item: dict) -> str:
+        """
+        Derive a unique ID for a trade.
+        The activity API has no 'id' field — use transactionHash + conditionId.
+        """
+        tx = item.get("transactionHash") or item.get("id") or item.get("tradeId") or ""
+        cid = item.get("conditionId") or ""
+        return f"{tx}:{cid}" if tx else ""
+
     def _parse(self, item: dict) -> Optional[Trade]:
         """Map a raw API dict to a Trade. Returns None on bad data."""
         try:
-            trade_id = str(item.get("id") or item.get("tradeId") or "")
+            trade_id = self._trade_id(item)
             if not trade_id:
                 return None
 
@@ -82,7 +92,10 @@ class WalletTracker:
             if shares <= 0 or price <= 0:
                 return None
 
-            # token_id is stored as "asset" in the Data API
+            # usdcSize is the exact USDC spent/received (API field)
+            usdc_amount = float(item.get("usdcSize") or (shares * price))
+
+            # token_id is stored as "asset" in the activity API
             token_id = str(
                 item.get("asset")
                 or item.get("tokenId")
@@ -99,7 +112,7 @@ class WalletTracker:
                 side=side,
                 shares=shares,
                 price=price,
-                usdc_amount=shares * price,
+                usdc_amount=usdc_amount,
                 market_title=str(item.get("title") or item.get("question") or "Unknown market"),
                 outcome=str(item.get("outcome") or ""),
                 slug=str(item.get("slug") or ""),
@@ -118,7 +131,7 @@ class WalletTracker:
         logger.info(f"Seeding trade history for {self.target_wallet} …")
         items = self._fetch(limit=100)
         for item in items:
-            trade_id = str(item.get("id") or item.get("tradeId") or "")
+            trade_id = self._trade_id(item)
             if trade_id:
                 self._seen_ids.add(trade_id)
         logger.success(

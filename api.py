@@ -47,7 +47,8 @@ class BotState:
     trades_skipped: int = 0
     stop_event: Optional[threading.Event] = None
 
-state = BotState()
+bot_state = BotState()
+state = bot_state  # backward-compat alias
 
 
 # ── request models ────────────────────────────────────────────────────────────

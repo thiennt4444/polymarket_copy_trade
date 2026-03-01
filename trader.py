@@ -11,7 +11,7 @@ from typing import Optional, Tuple
 
 from eth_account import Account
 from py_clob_client.client import ClobClient
-from py_clob_client.clob_types import MarketOrderArgs, OrderType
+from py_clob_client.clob_types import AssetType, BalanceAllowanceParams, MarketOrderArgs, OrderType
 
 import logger
 from config import Config
@@ -67,12 +67,11 @@ class ClobTrader:
         return None
 
     def get_usdc_balance(self) -> float:
-        """Return the USDC balance of our trading wallet (from CLOB API)."""
+        """Return the USDC (collateral) balance of our trading wallet."""
         try:
             resp = self._client.get_balance_allowance(
-                params={"asset_type": "CONDITIONAL"}
+                params=BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)
             )
-            # Fallback: try collateral balance endpoint
             return float(resp.get("balance", 0))
         except Exception:
             return 0.0

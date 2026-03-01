@@ -12,13 +12,25 @@
   "config_template": ".env.example",
   "features": [
     "Copy any wallet by pasting their address",
-    "Configurable position sizing (1-100% of their trade)",
-    "Risk controls: min/max USDC limits per trade",
+    "Fixed USDC bet size per trade",
+    "Risk controls: min/max USDC limits + slippage guard",
     "BUY-only mode to avoid copying sells",
     "Full trade logging to CSV file",
     "Auto-redemption of winning positions",
-    "No external API keys required"
+    "No external API keys required",
+    "HTTP control API for AI agent integration"
   ],
+  "agent_api": {
+    "base_url": "http://127.0.0.1:8765",
+    "port_env": "API_PORT",
+    "endpoints": {
+      "GET /status":  "Bot state, balance, trade counts, active config",
+      "GET /trades":  "Recent trades from CSV log (?limit=N)",
+      "PATCH /config": "Update fixed_usdc, poll_interval, target_wallet, etc. live",
+      "POST /stop":   "Graceful shutdown",
+      "POST /redeem": "Trigger immediate winning position redemption"
+    }
+  },
   "requirements": {
     "polygon_usdc_balance": true,
     "wallet_private_key": true,

@@ -74,7 +74,10 @@ def main() -> None:
         trader = ClobTrader()
         balance = trader.get_usdc_balance()
         bot_state.usdc_balance = balance
-        logger.info(f"USDC balance: ${balance:.2f}")
+        if balance >= 0:
+            logger.info(f"USDC balance: ${balance:.2f}")
+        else:
+            logger.info("USDC balance: check polymarket.com/portfolio")
     except RuntimeError as exc:
         logger.error(str(exc))
         sys.exit(1)

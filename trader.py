@@ -70,31 +70,26 @@ class ClobTrader:
 
     def get_usdc_balance(self) -> float:
         """
-        Return the USDC Cash balance from Polymarket Data API.
-        Polymarket stores funds in a proxy wallet — CLOB balance-allowance
-        returns 0 for the EOA, so we query the Data API directly.
+        Return the USDC Cash balance.
+        Polymarket Cash is tracked internally — check polymarket.com for exact value.
+        Returns -1 when the balance cannot be fetched (display only).
         """
-        try:
-            r = _requests.get(
-                f"{Config.DATA_API}/balance",
-                params={"user": self.address},
-                timeout=8,
-            )
-            r.raise_for_status()
-            data = r.json()
-            # Response: [{"asset": "...", "balance": "12.81"}] or {"balance": "12.81"}
-            if isinstance(data, list):
-                for item in data:
-                    name = str(item.get("asset", "") or item.get("name", "")).upper()
-                    if "USDC" in name or "USD" in name or not name:
-                        return float(item.get("balance", 0) or 0)
-                if data:
-                    return float(data[0].get("balance", 0) or 0)
-            if isinstance(data, dict):
-                return float(data.get("balance", 0) or 0)
-        except Exception as exc:
-            logger.warn(f"Balance check failed: {exc}")
-        return 0.0
+        for endpoint in ("/value", "/portfolio"):
+            try:
+                r = _requests.get(
+                    f"{Config.DATA_API}{endpoint}",
+                    params={"user": self.address},
+                    timeout=6,
+                )
+                if r.status_code == 200:
+                    data = r.json()
+                    for key in ("cash", "balance", "usdc", "value"):
+                        val = data.get(key) if isinstance(data, dict) else None
+                        if val is not None:
+                            return float(val)
+            except Exception:
+                pass
+        return -1.0
 
     # ── order logic ──────────────────────────────────────────────────────────
 

@@ -9,6 +9,8 @@ from __future__ import annotations
 
 from typing import Optional, Tuple
 
+import requests as _requests
+
 from eth_account import Account
 from py_clob_client.client import ClobClient
 from py_clob_client.clob_types import AssetType, BalanceAllowanceParams, MarketOrderArgs, OrderType
@@ -67,14 +69,32 @@ class ClobTrader:
         return None
 
     def get_usdc_balance(self) -> float:
-        """Return the USDC (collateral) balance of our trading wallet."""
+        """
+        Return the USDC Cash balance from Polymarket Data API.
+        Polymarket stores funds in a proxy wallet — CLOB balance-allowance
+        returns 0 for the EOA, so we query the Data API directly.
+        """
         try:
-            resp = self._client.get_balance_allowance(
-                params=BalanceAllowanceParams(asset_type=AssetType.COLLATERAL)
+            r = _requests.get(
+                f"{Config.DATA_API}/balance",
+                params={"user": self.address},
+                timeout=8,
             )
-            return float(resp.get("balance", 0))
-        except Exception:
-            return 0.0
+            r.raise_for_status()
+            data = r.json()
+            # Response: [{"asset": "...", "balance": "12.81"}] or {"balance": "12.81"}
+            if isinstance(data, list):
+                for item in data:
+                    name = str(item.get("asset", "") or item.get("name", "")).upper()
+                    if "USDC" in name or "USD" in name or not name:
+                        return float(item.get("balance", 0) or 0)
+                if data:
+                    return float(data[0].get("balance", 0) or 0)
+            if isinstance(data, dict):
+                return float(data.get("balance", 0) or 0)
+        except Exception as exc:
+            logger.warn(f"Balance check failed: {exc}")
+        return 0.0
 
     # ── order logic ──────────────────────────────────────────────────────────
 
